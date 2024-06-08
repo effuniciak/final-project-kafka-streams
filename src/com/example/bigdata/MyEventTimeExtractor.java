@@ -12,8 +12,8 @@ public class MyEventTimeExtractor implements TimestampExtractor {
 
         if (record.value() instanceof String) {
             stringLine = (String) record.value();
-            if (AccessLogRecord.lineIsCorrect(stringLine)) {
-                timestamp = AccessLogRecord.parseFromLogLine(stringLine).
+            if (AccessCsvRecord.lineIsCorrect(stringLine)) {
+                timestamp = AccessCsvRecord.parseFromCsvRow(stringLine).
                         getTimestampInMillis();
             }
         }

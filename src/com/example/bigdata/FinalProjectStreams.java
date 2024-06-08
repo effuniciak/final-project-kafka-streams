@@ -11,47 +11,51 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class ApacheLogToAlertRequests {
+
+// TODO: change application name
+public class FinalProjectStreams {
 
     public static void main(String[] args) throws Exception {
         Properties config = new Properties();
         config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, args[0]);
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "alert-requests-application");
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-streams");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
-        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, ???);
+        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class);
 
         final Serde<String> stringSerde = Serdes.String();
 
         final StreamsBuilder builder = new StreamsBuilder();
 
+        String sourceTopic = args[1];
+
         KStream<String, String> textLines = builder
-                .stream("???", Consumed.with(stringSerde, stringSerde));
+                .stream(sourceTopic, Consumed.with(stringSerde, stringSerde));
 
-        KStream<String, AccessLogRecord> apacheLogStream = textLines
-                .filter((key, value) -> AccessLogRecord.lineIsCorrect(value))
-                .mapValues(value -> ???);
+        KStream<String, AccessCsvRecord> csvDataStream = textLines
+                .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
+                .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
-        KTable<Windowed<String>, Long> ipCounts = apacheLogStream
-                .map((key, value) -> KeyValue.pair(???, ""))
-                .groupByKey()
-                .windowedBy(TimeWindows.of(Duration.???(10)) /* time-based window */)
-                .count();
+//        KTable<Windowed<String>, Long> ipCounts = csvDataStream
+//                .map((key, value) -> KeyValue.pair(???, ""))
+//                .groupByKey()
+//                .windowedBy(TimeWindows.of(Duration.???(10)) /* time-based window */)
+//                .count();
+//
+//        KTable<String, String> difficultIps = ipCounts.toStream()
+//                .filter((key, value) -> value > ???)
+//                .map((key, value) -> KeyValue.pair(key.key(), String.valueOf(value)))
+//                .groupByKey()
+//                .reduce((aggValue, newValue) -> newValue,
+//                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("???"));
 
-        KTable<String, String> difficultIps = ipCounts.toStream()
-                .filter((key, value) -> value > ???)
-                .map((key, value) -> KeyValue.pair(key.key(), String.valueOf(value)))
-                .groupByKey()
-                .reduce((aggValue, newValue) -> newValue,
-                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("???"));
+//        KStream<String, String> keyIpValueEndpoint = apacheLogStream
+//                .map((key, value) -> KeyValue.pair(???, value.getEndpoint()));
 
-        KStream<String, String> keyIpValueEndpoint = apacheLogStream
-                .map((key, value) -> KeyValue.pair(???, value.getEndpoint()));
-
-        keyIpValueEndpoint
-                . ???(???, (enpoint, howmany) -> enpoint + "," + howmany)
-                .to("???");
+//        keyIpValueEndpoint
+//                . ???(???, (enpoint, howmany) -> enpoint + "," + howmany)
+//                .to("???");
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());

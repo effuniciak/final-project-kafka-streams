@@ -54,9 +54,12 @@ public class AccessCsvRecord implements Serializable {
                 dataArr[4], dataArr[5], dataArr[6], dataArr[7]);
     }
 
+    public static boolean lineIsCorrect(String line) {
+        return line.split(",").length == AccessCsvRecord.expectedDataLength;
+    }
 
     public String getDate() {
-        return date;
+        return this.date;
     }
 
     public void setDate(String date) {
@@ -64,81 +67,53 @@ public class AccessCsvRecord implements Serializable {
     }
 
     public double getOpen() {
-        return clientIdentd;
+        return this.open;
     }
 
-    public void setClientIdentd(String clientIdentd) {
-        this.clientIdentd = clientIdentd;
+    public void setOpen(double open) { this.open = open; }
+
+    public double getHigh() {
+        return this.high;
     }
 
-    public String getUserID() {
-        return userID;
+    public void setHigh(double high) { this.high = high; }
+
+    public double getClose() {
+        return this.close;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
+    public void setClose(double close) { this.close = close; }
+
+    public double getAdjClose() {
+        return this.adjClose;
     }
 
-    public String getDateTimeString() {
-        return dateTimeString;
+    public void setAdjClose(double adjClose) { this.adjClose = adjClose; }
+
+    public int getVolume() {
+        return this.volume;
     }
 
-    public void setDateTimeString(String dateTimeString) {
-        this.dateTimeString = dateTimeString;
+    public void setVolume(int volume) { this.volume = volume; }
+    public String getStock() {
+        return this.stock;
     }
 
-    public String getMethod() {
-        return method;
-    }
+    public void setStock(String stock) { this.stock = stock; }
 
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
-    }
-
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    public void setResponseCode(int responseCode) {
-        this.responseCode = responseCode;
-    }
-
-    public long getContentSize() {
-        return contentSize;
-    }
-
-    public void setContentSize(long contentSize) {
-        this.contentSize = contentSize;
-    }
 
     @Override
     public String toString() {
-        return String.format("%s %s %s [%s] \"%s %s %s\" %s %s", ipAddress, clientIdentd, userID,
-                dateTimeString, method, endpoint, protocol, responseCode, contentSize);
+        return String.format("%s , %s , %s , %s , %s , %s , %s,  %s",this.date, this.open, this.low,
+                this.high, this.close, this.adjClose, this.volume, this.stock);
     }
 
     public long getTimestampInMillis() {
         // 21/Jul/2014:9:55:27 -0800
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss:SSSZ", Locale.US);
         Date date;
         try {
-            date = sdf.parse(dateTimeString);
+            date = sdf.parse(this.date);
             return date.getTime();
         } catch (ParseException e) {
             return -1;
