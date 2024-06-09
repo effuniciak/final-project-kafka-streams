@@ -2,23 +2,26 @@ package com.example.bigdata;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 
-// TODO: change application name
-public class FinalProjectStreams {
+public class FinalProjectKafkaStreams {
 
     public static void main(String[] args) throws Exception {
+        String bootstrapServersConfig = args[0];
+        String sourceTopic = args[1];
+        String outputTopic = args[2];
+        int D = Integer.parseInt(args[3]);
+        int P = Integer.parseInt(args[4]);
+
         Properties config = new Properties();
-        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, args[0]);
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-streams");
+        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersConfig);
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-kafka-streams");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
@@ -28,14 +31,31 @@ public class FinalProjectStreams {
 
         final StreamsBuilder builder = new StreamsBuilder();
 
-        String sourceTopic = args[1];
+        // key is always null so we could skip de-serializing it
+        KStream<byte[], String> textLines = builder
+                .stream(sourceTopic, Consumed.with(null, stringSerde));
 
-        KStream<String, String> textLines = builder
-                .stream(sourceTopic, Consumed.with(stringSerde, stringSerde));
-
-        KStream<String, AccessCsvRecord> csvDataStream = textLines
+        KStream<byte[], AccessCsvRecord> csvDataStream = textLines
                 .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
                 .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
+
+        /*
+            1) group it by stock symbol and window by month
+            2) aggregate by Close, Low, High, Volume
+         */
+
+
+        KTable<Windowed<String>, AccessCsvRecord> dataGroupedByStockAndMonth = csvDataStream.map(
+                (key, value) -> new KeyValue<>(value.getStock(), value)
+        ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(
+
+        ); // hardcoded month (idk)
+
+//        KGroupedStream<byte[], AccessCsvRecord> groupedCsvDataStream = csvDataStream.groupByKey();
+//        KTable<byte[], AccessCsvRecord> monthlyAndAggregatedData =
+//                groupedCsvDataStream.aggregate()
+
+//        KTable<String, String> recordDates = csvDataStream.map((key, value) -> KeyValue.pair(key, value.getDate()))
 
 //        KTable<Windowed<String>, Long> ipCounts = csvDataStream
 //                .map((key, value) -> KeyValue.pair(???, ""))
@@ -53,9 +73,9 @@ public class FinalProjectStreams {
 //        KStream<String, String> keyIpValueEndpoint = apacheLogStream
 //                .map((key, value) -> KeyValue.pair(???, value.getEndpoint()));
 
-//        keyIpValueEndpoint
-//                . ???(???, (enpoint, howmany) -> enpoint + "," + howmany)
-//                .to("???");
+        csvDataStream
+                .toStream(???, (enpoint, howmany) -> enpoint + "," + howmany)
+                .to(outputTopic);
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
