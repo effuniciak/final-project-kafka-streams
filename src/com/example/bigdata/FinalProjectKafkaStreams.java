@@ -30,7 +30,7 @@ public class FinalProjectKafkaStreams {
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-kafka-streams");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-//        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class);
+        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class);
 
         final Serde<String> stringSerde = Serdes.String();
 
@@ -45,7 +45,7 @@ public class FinalProjectKafkaStreams {
                 .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
         csvDataStream.peek((k ,v) -> System.out.println(v));
-        csvDataStream.peek((k ,v) -> System.out.println(v.getTimestampInMillis()));
+//        csvDataStream.peek((k ,v) -> System.out.println(v.getTimestampInMillis()));
 
         /*
             1) group it by stock symbol and window by month (hardcoded 30 days)
@@ -63,6 +63,9 @@ public class FinalProjectKafkaStreams {
 //        );
 //
 //        dataAggregatedByStockAndMonth.toStream().to(outputEtlTopic);
+
+        KStream<byte[], String> outputDataAsString = csvDataStream.mapValues(v -> v.toString());
+        outputDataAsString.to(outputEtlTopic, Produced.with(null, stringSerde));
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());

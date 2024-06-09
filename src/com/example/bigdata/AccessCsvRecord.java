@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,6 +14,7 @@ import java.util.regex.Pattern;
 public class AccessCsvRecord implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final long tenYearsMillis = 31556952;
 
     private static final Logger logger = Logger.getLogger("Access");
     // Example Apache log line: TODO: refactor logger/get rid of it
@@ -106,9 +108,9 @@ public class AccessCsvRecord implements Serializable {
     }
 
     public void setVolume(double volume) { this.volume = volume; }
-public String getStock() {
-    return this.stock;
-}
+    public String getStock() {
+        return this.stock;
+    }
 
     public void setStock(String stock) { this.stock = stock; }
 
@@ -126,7 +128,12 @@ public String getStock() {
 
         try {
             date = sdf.parse(this.date);
-            return date.getTime();
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.add(Calendar.YEAR, 10);
+            Date newDate = cal.getTime();
+            return newDate.getTime();
         } catch (ParseException e) {
             return -1;
         }
