@@ -30,7 +30,7 @@ public class FinalProjectKafkaStreams {
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-kafka-streams");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-//        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class.getName());
+//        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class);
 
         final Serde<String> stringSerde = Serdes.String();
 
@@ -40,22 +40,18 @@ public class FinalProjectKafkaStreams {
         KStream<byte[], String> textLines = builder
                 .stream(sourceTopic, Consumed.with(null, stringSerde));
 
-        textLines.peek((k ,v) -> System.out.println(String.format("%s %s", AccessCsvRecord.lineIsCorrect(v), v)));
+        KStream<byte[], AccessCsvRecord> csvDataStream = textLines
+                .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
+                .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
-//        KStream<byte[], AccessCsvRecord> csvDataStream = textLines
-//                .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
-//                .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
-//
-//        csvDataStream.foreach((key, value) -> {
-//            System.out.println("================");
-//            System.out.println(value.toString());
-//        });
-//
-//        /*
-//            1) group it by stock symbol and window by month (hardcoded 30 days)
-//            2) aggregate by Close, Low, High, Volume
-//         */
-//
+        csvDataStream.peek((k ,v) -> System.out.println(v));
+        csvDataStream.peek((k ,v) -> System.out.println(v.getTimestampInMillis()));
+
+        /*
+            1) group it by stock symbol and window by month (hardcoded 30 days)
+            2) aggregate by Close, Low, High, Volume
+         */
+
 //        KTable<Windowed<String>, String> dataAggregatedByStockAndMonth = csvDataStream.map(
 //                (key, value) -> new KeyValue<>(value.getStock(), value)
 //        ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(

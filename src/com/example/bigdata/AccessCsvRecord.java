@@ -48,11 +48,11 @@ public class AccessCsvRecord implements Serializable {
     }
 
     public static AccessCsvRecord parseFromCsvRow(String csvRow) {
-        String[] dataArr = csvRow.split(",");
-
-        if (dataArr.length != AccessCsvRecord.expectedDataLength) {
+        if (!AccessCsvRecord.lineIsCorrect(csvRow)) {
             throw new RuntimeException("Error parsing csvRow: " + csvRow);
         }
+
+        String[] dataArr = csvRow.split(",");
 
         return new AccessCsvRecord(dataArr[0], dataArr[1], dataArr[2], dataArr[3],
                 dataArr[4], dataArr[5], dataArr[6], dataArr[7]);
@@ -115,13 +115,13 @@ public String getStock() {
 
     @Override
     public String toString() {
-        return String.format("%s , %s , %s , %s , %s , %s , %s,  %s",this.date, this.open, this.low,
+        return String.format("%s, %s, %s, %s, %s, %s, %s, %s",this.date, this.open, this.low,
                 this.high, this.close, this.adjClose, this.volume, this.stock);
     }
 
     public long getTimestampInMillis() {
         // 21/Jul/2014:9:55:27 -0800
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss:SSSZ", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         Date date;
 
         try {
