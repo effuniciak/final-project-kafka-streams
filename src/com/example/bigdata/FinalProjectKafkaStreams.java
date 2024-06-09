@@ -18,9 +18,10 @@ public class FinalProjectKafkaStreams {
     public static void main(String[] args) throws Exception {
         String bootstrapServersConfig = args[0];
         String sourceTopic = args[1];
-        String outputTopic = args[2];
-        int D = Integer.parseInt(args[3]);
-        int P = Integer.parseInt(args[4]);
+        String outputEtlTopic = args[2];
+        String outputAnomaliesTopic = args[3];
+        int D = Integer.parseInt(args[4]);
+        int P = Integer.parseInt(args[5]);
 
         Properties config = new Properties();
         config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersConfig);
@@ -42,8 +43,6 @@ public class FinalProjectKafkaStreams {
                 .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
                 .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
-        final Serde<StockDataAggregator> stockDataAggregatorSerde =
-
         /*
             1) group it by stock symbol and window by month (hardcoded 30 days)
             2) aggregate by Close, Low, High, Volume
@@ -59,6 +58,8 @@ public class FinalProjectKafkaStreams {
                         .withKeySerde(stringSerde)
                         .withValueSerde(stringSerde)
         );
+
+        dataAggregatedByStockAndMonth.toStream().to(outputEtlTopic);
 
 //        KGroupedStream<byte[], AccessCsvRecord> groupedCsvDataStream = csvDataStream.groupByKey();
 //        KTable<byte[], AccessCsvRecord> monthlyAndAggregatedData =
@@ -82,9 +83,9 @@ public class FinalProjectKafkaStreams {
 //        KStream<String, String> keyIpValueEndpoint = apacheLogStream
 //                .map((key, value) -> KeyValue.pair(???, value.getEndpoint()));
 
-        csvDataStream
-                .toStream(???, (enpoint, howmany) -> enpoint + "," + howmany)
-                .to(outputTopic);
+//        csvDataStream
+//                .toStream(???, (enpoint, howmany) -> enpoint + "," + howmany)
+//                .to(outputTopic);
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
