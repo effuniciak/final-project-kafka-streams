@@ -6,11 +6,21 @@ public class StockDataAggregator {
     public double high = 0;
     public double volume = 0;
 
-    public StockDataAggregator returnUpdated(double close, double low, double high, double volume) {
-        this.close += close;
-        this.low += low;
-        this.high += high;
-        this.volume += volume;
-        return this;
+    private static final String PATTERN = "%g %g %g %g";
+
+    public static String createString(double close, double low, double high, double volume) {
+        return String.format(StockDataAggregator.PATTERN, close, low, high, volume);
+    }
+
+    // pattern: "%g %g %g %g <- close low high volume"
+    public static String stringToUpdatedString(String line, double close, double low, double high, double volume) {
+        String[] splittedLine = line.split(" ");
+
+        double newClose = Double.parseDouble(splittedLine[0]) + close;
+        double newLow = Double.parseDouble(splittedLine[0]) + low;
+        double newHigh = Double.parseDouble(splittedLine[0]) + high;
+        double newVolume = Double.parseDouble(splittedLine[0]) + volume;
+
+        return String.format(StockDataAggregator.PATTERN, newClose, newLow, newHigh, newVolume);
     }
 }

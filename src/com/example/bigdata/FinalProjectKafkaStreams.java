@@ -4,6 +4,9 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.WindowStore;
 
 import java.time.Duration;
 import java.util.Properties;
@@ -39,18 +42,22 @@ public class FinalProjectKafkaStreams {
                 .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
                 .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
+        final Serde<StockDataAggregator> stockDataAggregatorSerde =
+
         /*
             1) group it by stock symbol and window by month (hardcoded 30 days)
             2) aggregate by Close, Low, High, Volume
          */
 
 
-        KTable<Windowed<String>, StockDataAggregator> dataGroupedByStockAndMonth = csvDataStream.map(
+        KTable<Windowed<String>, String> dataAggregatedByStockAndMonth = csvDataStream.map(
                 (key, value) -> new KeyValue<>(value.getStock(), value)
         ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(
-                () -> new StockDataAggregator(),
-                (k, v, aggregate) -> aggregate.returnUpdated(v.getClose(), v.getLow(), v.getHigh(), v.getVolume()),
-                Materialized
+                () -> StockDataAggregator.createString(0, 0, 0, 0),
+                (k, v, aggregate) -> StockDataAggregator.stringToUpdatedString(aggregate, v.getClose(), v.getLow(), v.getHigh(), v.getVolume()),
+                Materialized.<String, String, WindowStore<Bytes, byte[]>>as("fp-etl-store")
+                        .withKeySerde(stringSerde)
+                        .withValueSerde(stringSerde)
         );
 
 //        KGroupedStream<byte[], AccessCsvRecord> groupedCsvDataStream = csvDataStream.groupByKey();
