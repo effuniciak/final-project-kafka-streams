@@ -16,10 +16,10 @@ public class StockDataAggregator {
     public static String stringToUpdatedString(String line, double close, double low, double high, double volume) {
         String[] splittedLine = line.split(" ");
 
-        double newClose = Double.parseDouble(splittedLine[0]) + close;
-        double newLow = Double.parseDouble(splittedLine[0]) + low;
-        double newHigh = Double.parseDouble(splittedLine[0]) + high;
-        double newVolume = Double.parseDouble(splittedLine[0]) + volume;
+        double newClose = (Double.parseDouble(splittedLine[0]) + close) / 2;
+        double newLow = (Double.parseDouble(splittedLine[0]) + low) / 2;
+        double newHigh = (Double.parseDouble(splittedLine[0]) + high) / 2;
+        double newVolume = (Double.parseDouble(splittedLine[0]) + volume) / 2;
 
         return String.format(StockDataAggregator.PATTERN, newClose, newLow, newHigh, newVolume);
     }

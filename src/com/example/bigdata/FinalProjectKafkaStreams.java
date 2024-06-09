@@ -22,14 +22,15 @@ public class FinalProjectKafkaStreams {
         String outputAnomaliesTopic = args[3];
         int D = Integer.parseInt(args[4]);
         int P = Integer.parseInt(args[5]);
+        System.out.println(String.format("%s %s %s %s %s %s", args[0], args[1], args[2], args[3]
+            ,args[4], args[5]));
 
         Properties config = new Properties();
         config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServersConfig);
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "final-project-kafka-streams");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-
-        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class);
+//        config.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, MyEventTimeExtractor.class.getName());
 
         final Serde<String> stringSerde = Serdes.String();
 
@@ -39,53 +40,33 @@ public class FinalProjectKafkaStreams {
         KStream<byte[], String> textLines = builder
                 .stream(sourceTopic, Consumed.with(null, stringSerde));
 
-        KStream<byte[], AccessCsvRecord> csvDataStream = textLines
-                .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
-                .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
+        textLines.peek((k ,v) -> System.out.println(String.format("%s %s", AccessCsvRecord.lineIsCorrect(v), v)));
 
-        /*
-            1) group it by stock symbol and window by month (hardcoded 30 days)
-            2) aggregate by Close, Low, High, Volume
-         */
-
-
-        KTable<Windowed<String>, String> dataAggregatedByStockAndMonth = csvDataStream.map(
-                (key, value) -> new KeyValue<>(value.getStock(), value)
-        ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(
-                () -> StockDataAggregator.createString(0, 0, 0, 0),
-                (k, v, aggregate) -> StockDataAggregator.stringToUpdatedString(aggregate, v.getClose(), v.getLow(), v.getHigh(), v.getVolume()),
-                Materialized.<String, String, WindowStore<Bytes, byte[]>>as("fp-etl-store")
-                        .withKeySerde(stringSerde)
-                        .withValueSerde(stringSerde)
-        );
-
-        dataAggregatedByStockAndMonth.toStream().to(outputEtlTopic);
-
-//        KGroupedStream<byte[], AccessCsvRecord> groupedCsvDataStream = csvDataStream.groupByKey();
-//        KTable<byte[], AccessCsvRecord> monthlyAndAggregatedData =
-//                groupedCsvDataStream.aggregate()
-
-//        KTable<String, String> recordDates = csvDataStream.map((key, value) -> KeyValue.pair(key, value.getDate()))
-
-//        KTable<Windowed<String>, Long> ipCounts = csvDataStream
-//                .map((key, value) -> KeyValue.pair(???, ""))
-//                .groupByKey()
-//                .windowedBy(TimeWindows.of(Duration.???(10)) /* time-based window */)
-//                .count();
+//        KStream<byte[], AccessCsvRecord> csvDataStream = textLines
+//                .filter((key, value) -> AccessCsvRecord.lineIsCorrect(value))
+//                .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 //
-//        KTable<String, String> difficultIps = ipCounts.toStream()
-//                .filter((key, value) -> value > ???)
-//                .map((key, value) -> KeyValue.pair(key.key(), String.valueOf(value)))
-//                .groupByKey()
-//                .reduce((aggValue, newValue) -> newValue,
-//                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("???"));
-
-//        KStream<String, String> keyIpValueEndpoint = apacheLogStream
-//                .map((key, value) -> KeyValue.pair(???, value.getEndpoint()));
-
-//        csvDataStream
-//                .toStream(???, (enpoint, howmany) -> enpoint + "," + howmany)
-//                .to(outputTopic);
+//        csvDataStream.foreach((key, value) -> {
+//            System.out.println("================");
+//            System.out.println(value.toString());
+//        });
+//
+//        /*
+//            1) group it by stock symbol and window by month (hardcoded 30 days)
+//            2) aggregate by Close, Low, High, Volume
+//         */
+//
+//        KTable<Windowed<String>, String> dataAggregatedByStockAndMonth = csvDataStream.map(
+//                (key, value) -> new KeyValue<>(value.getStock(), value)
+//        ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(
+//                () -> StockDataAggregator.createString(0, 0, 0, 0),
+//                (k, v, aggregate) -> StockDataAggregator.stringToUpdatedString(aggregate, v.getClose(), v.getLow(), v.getHigh(), v.getVolume()),
+//                Materialized.<String, String, WindowStore<Bytes, byte[]>>as("fp-etl-store")
+//                        .withKeySerde(stringSerde)
+//                        .withValueSerde(stringSerde)
+//        );
+//
+//        dataAggregatedByStockAndMonth.toStream().to(outputEtlTopic);
 
         final Topology topology = builder.build();
         System.out.println(topology.describe());
@@ -104,6 +85,7 @@ public class FinalProjectKafkaStreams {
 
         try {
             streams.start();
+            System.out.println("Streams started correctly");
             latch.await();
         } catch (Throwable e) {
             System.exit(1);

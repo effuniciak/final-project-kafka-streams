@@ -20,6 +20,10 @@ public class AccessCsvRecord implements Serializable {
 
     public static int expectedDataLength = 8;
 
+    private static final String CSV_ENTRY_PATTERN =
+            "(\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d\\.\\d\\d\\dZ)(,\\d+\\.\\d+)(,\\d+\\.\\d+)(,\\d+\\.\\d+)(,\\d+\\.\\d+)(,\\d+\\.\\d+)(,\\d+\\.\\d+),[A-Z]+";
+    private static final Pattern PATTERN = Pattern.compile(CSV_ENTRY_PATTERN);
+
 
     private String date;
     private double open;
@@ -55,7 +59,8 @@ public class AccessCsvRecord implements Serializable {
     }
 
     public static boolean lineIsCorrect(String line) {
-        return line.split(",").length == AccessCsvRecord.expectedDataLength;
+        Matcher m = PATTERN.matcher(line);
+        return m.find();
     }
 
     public String getDate() {
@@ -118,6 +123,7 @@ public String getStock() {
         // 21/Jul/2014:9:55:27 -0800
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss:SSSZ", Locale.US);
         Date date;
+
         try {
             date = sdf.parse(this.date);
             return date.getTime();
