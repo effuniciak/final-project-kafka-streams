@@ -40,16 +40,18 @@ public class FinalProjectKafkaStreams {
                 .mapValues(value -> AccessCsvRecord.parseFromCsvRow(value));
 
         /*
-            1) group it by stock symbol and window by month
+            1) group it by stock symbol and window by month (hardcoded 30 days)
             2) aggregate by Close, Low, High, Volume
          */
 
 
-        KTable<Windowed<String>, AccessCsvRecord> dataGroupedByStockAndMonth = csvDataStream.map(
+        KTable<Windowed<String>, StockDataAggregator> dataGroupedByStockAndMonth = csvDataStream.map(
                 (key, value) -> new KeyValue<>(value.getStock(), value)
         ).groupByKey().windowedBy(TimeWindows.of(Duration.ofDays(30))).aggregate(
-
-        ); // hardcoded month (idk)
+                () -> new StockDataAggregator(),
+                (k, v, aggregate) -> aggregate.returnUpdated(v.getClose(), v.getLow(), v.getHigh(), v.getVolume()),
+                Materialized
+        );
 
 //        KGroupedStream<byte[], AccessCsvRecord> groupedCsvDataStream = csvDataStream.groupByKey();
 //        KTable<byte[], AccessCsvRecord> monthlyAndAggregatedData =

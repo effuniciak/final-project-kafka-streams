@@ -27,7 +27,7 @@ public class AccessCsvRecord implements Serializable {
     private double low;
     private double close;
     private double adjClose;
-    private int volume;
+    private double volume;
     private String stock;
 
     private AccessCsvRecord(String date, String open, String high,
@@ -39,7 +39,7 @@ public class AccessCsvRecord implements Serializable {
         this.low = Double.parseDouble(low);
         this.close = Double.parseDouble(close);
         this.adjClose = Double.parseDouble(adjClose);
-        this.volume = Integer.parseInt(volume);
+        this.volume = Double.parseDouble(volume);
         this.stock = stock;
     }
 
@@ -78,6 +78,12 @@ public class AccessCsvRecord implements Serializable {
 
     public void setHigh(double high) { this.high = high; }
 
+    public double getLow() {
+        return this.low;
+    }
+
+    public void setLow(double low) { this.low = low; }
+
     public double getClose() {
         return this.close;
     }
@@ -90,14 +96,14 @@ public class AccessCsvRecord implements Serializable {
 
     public void setAdjClose(double adjClose) { this.adjClose = adjClose; }
 
-    public int getVolume() {
+    public double getVolume() {
         return this.volume;
     }
 
-    public void setVolume(int volume) { this.volume = volume; }
-    public String getStock() {
-        return this.stock;
-    }
+    public void setVolume(double volume) { this.volume = volume; }
+public String getStock() {
+    return this.stock;
+}
 
     public void setStock(String stock) { this.stock = stock; }
 
